@@ -32,7 +32,7 @@ class EpsSwitch:
 
 	def __init__(self, ip, port, user, password):
 		self.port = port
-		self.url = 'http://'+ip+'/config/home_f.html:'+self.port
+		self.url = 'http://'+ip+':'+self.port+'/config/home_f.html'
 		self.user = user
 		self.password = password
 		self.auth = base64.encodestring(self.user + ':' + self.password)
