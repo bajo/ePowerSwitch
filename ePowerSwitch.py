@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Filename: EPowerSwitch.py
+# Filename: ePowerSwitch.py
 
 """ 
 EPowerSwitch module provides a way to set and retrieve the status of a socket on a remote-control socket strip from Leuning
