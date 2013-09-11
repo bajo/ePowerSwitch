@@ -91,7 +91,6 @@ class EpsSwitch:
 	
 	def setStatus(self, number, status):
 		""" set status of socket """
-		print status.lower()
 		if status.lower() in {'on','On','1'}:
 			name = 'P'+str(number)+'=1'
 		elif status.lower() in {'off','Off','0'}:
