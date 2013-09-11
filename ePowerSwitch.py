@@ -16,16 +16,18 @@ import prettytable
 class EpsSocket:
 	""" class for ePowerSwitch power outlets """
 	""" each EpsSocket has a number, name, status and an unknown parameter """
-	def __init__(self, number, name, status, param):
+	def __init__(self, number, name, status, param, cycles):
 		self.number = number
 		self.name = name
 		self.status = status
 		self.param = param
+		self.cycles = cycles
 	
 	number = 0
 	name = ''
 	status = 0
 	param = 0
+	cycles = 0
 
 class EpsSwitch:
 	""" class for ePowerSwitch power outlets """
@@ -33,7 +35,7 @@ class EpsSwitch:
 
 	def __init__(self, ip, port, user, password):
 		self.port = port
-		self.url = 'http://'+ip+':'+self.port+'/config/home_f.html'
+		self.url = 'http://'+ip+':'+self.port+'/config/'
 		self.user = user
 		self.password = password
 		self.auth = base64.encodestring(self.user + ':' + self.password)
@@ -53,26 +55,38 @@ class EpsSwitch:
 	def getData(self):
 		""" getData function """
 		""" retrieve data from ePowerSwitch power outlet """
-		""" data is the name, socketname and status """
+		""" data is the name, socketname, status and count of power cycles """
 
 		del self.sockets[:]
-		resp, content = self.h.request(self.url, 'GET', headers=self.header)
+		resp, content = self.h.request(self.url+'home_f.html', 'GET', headers=self.header)
 		if content == '401 Authorization Required':
 			print 'Webserver is too slow. \nPlease repeat the request'
 			return False
 		else:
+			cycles = dict()
+			resp2, content2 = self.h.request(self.url+'misc_f.html', 'GET', headers=self.header)
+			lines2 = string.split(content2, '\n')
 			lines = string.split(content, '\n')
+			
 			tmp_name = [s for s in lines if "hfr(\"" in s]
+			sockets = [s for s in lines if "socket(" in s]
+			sockets2 = [s for s in lines2 if "Socket" in s]
+			
 			self.name = re.search(r"\"(.+)\"",tmp_name[0]).group(1).strip()
 		
-			sockets = [s for s in lines if "socket(" in s]
+			for item in sockets2:
+				a = re.search(r"Socket(.+)\)",item)
+				b = a.group(1).split(',')[0].split('"')[0].strip()
+				c = a.group(1).split(',')[1].strip()
+				cycles[b] = c
+
 			for socket in sockets:
 				item = re.search(r"\((.+)\)",socket).group(1).strip()
 				number = int(item.split(',')[0]) 
 				name = item.split(',')[1].split()[0][1:]
 				status = int(item.split(',')[2]) 
 				param = int(item.split(',')[3]) 
-				self.sockets.append(EpsSocket(number, name, status, param))
+				self.sockets.append(EpsSocket(number, name, status, param, cycles[str(number)]))
 			return True
 
 	
@@ -80,13 +94,13 @@ class EpsSwitch:
 		""" print status of all sockets for the ePowerSwitch """
 		if (self.getData()):
 			print self.name
-			x = prettytable.PrettyTable(['socket number', 'connected device', 'status'])
+			x = prettytable.PrettyTable(['socket number', 'connected device', 'status', 'power cycles'])
 			for socket in self.sockets:
 				if socket.status: 
 					status = 'On'
 				else: 
 					status = 'Off'
-				x.add_row([socket.number, socket.name, status])
+				x.add_row([socket.number, socket.name, status, socket.cycles])
 			print x
 	
 	def setStatus(self, number, status):
@@ -97,5 +111,5 @@ class EpsSwitch:
 			name = 'P'+str(number)+'=0'
 		else: 
 			return False
-		resp, content = self.h.request(self.url, 'POST', headers=self.header, body=name)
+		resp, content = self.h.request(self.url+'home_f.html', 'POST', headers=self.header, body=name)
 		return True
