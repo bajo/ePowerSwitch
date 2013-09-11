@@ -11,6 +11,7 @@ import base64
 import httplib2
 import string
 import re
+import prettytable
 
 class EpsSocket:
 	""" class for ePowerSwitch power outlets """
@@ -68,7 +69,6 @@ class EpsSwitch:
 			for socket in sockets:
 				item = re.search(r"\((.+)\)",socket).group(1).strip()
 				number = int(item.split(',')[0]) 
-				#name = re.search("\"(.+)\"",item).group(1).strip()
 				name = item.split(',')[1].split()[0][1:]
 				status = int(item.split(',')[2]) 
 				param = int(item.split(',')[3]) 
@@ -80,13 +80,23 @@ class EpsSwitch:
 		""" print status of all sockets for the ePowerSwitch """
 		if (self.getData()):
 			print self.name
+			x = prettytable.PrettyTable(['socket number', 'connected device', 'status'])
 			for socket in self.sockets:
 				if socket.status: 
-					print '#' + str(socket.number)+', device: ' + socket.name +' is On' 
+					status = 'On'
 				else: 
-					print '#' + str(socket.number)+', device: ' + socket.name +' is Off'
+					status = 'Off'
+				x.add_row([socket.number, socket.name, status])
+			print x
 	
 	def setStatus(self, number, status):
 		""" set status of socket """
-		name = 'P'+str(number)+'='+str(status)
+		print status.lower()
+		if status.lower() in {'on','On','1'}:
+			name = 'P'+str(number)+'=1'
+		elif status.lower() in {'off','Off','0'}:
+			name = 'P'+str(number)+'=0'
+		else: 
+			return False
 		resp, content = self.h.request(self.url, 'POST', headers=self.header, body=name)
+		return True
