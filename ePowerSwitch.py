@@ -12,6 +12,7 @@ import httplib2
 import string
 import re
 import prettytable
+import time
 
 class EpsSocket:
 	""" class for ePowerSwitch power outlets """
@@ -66,7 +67,7 @@ class EpsSwitch:
 		else:
 			cycles = dict()
 			resp2, content2 = self.h.request(self.url+'config/misc_f.html', 'GET', headers=self.header)
-			if content == '401 Authorization Required':
+			if content2 == '401 Authorization Required':
 				print 'user '+self.username+'is not the administration user.\n Power cycle count will not be available'
 			else:
 				lines2 = string.split(content2, '\n')
@@ -114,5 +115,7 @@ class EpsSwitch:
 			name = 'P'+str(number)+'=0'
 		else: 
 			return False
+		resp, content = self.h.request(self.url+'cmd.html', 'POST', headers=self.header, body=name)
+		time.sleep(1)
 		resp, content = self.h.request(self.url+'cmd.html', 'POST', headers=self.header, body=name)
 		return True
