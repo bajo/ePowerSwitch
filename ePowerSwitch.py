@@ -68,7 +68,7 @@ class EpsSwitch:
 			cycles = dict()
 			resp2, content2 = self.h.request(self.url+'config/misc_f.html', 'GET', headers=self.header)
 			if content2 == '401 Authorization Required':
-				print 'user '+self.username+'is not the administration user.\n Power cycle count will not be available'
+				print 'user '+self.user+' is not the administration user.\n Power cycle count will not be available'
 			else:
 				lines2 = string.split(content2, '\n')
 				sockets2 = [s for s in lines2 if "Socket" in s]
